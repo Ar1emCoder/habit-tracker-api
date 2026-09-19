@@ -5,6 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import habits
 from app.tracker_db import init_pool, close_pool
 from pathlib import Path
+import os
+import uvicorn
+
 
 app = FastAPI(title="HabitTracker by Artem")
 
@@ -36,3 +39,7 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     await close_pool()
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))

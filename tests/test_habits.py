@@ -50,7 +50,6 @@ class TestMarkHabitComplete:
 
     async def test_mark_habit_complete_duplicate_returns_none(self):
         mock_db = AsyncMock()
-        # Просто передаем сообщение об ошибке, этого достаточно для срабатывания except
         mock_db.fetchrow.side_effect = UniqueViolationError("duplicate key value violates unique constraint")
 
         result = await mark_habit_complete(mock_db, habit_id=1)

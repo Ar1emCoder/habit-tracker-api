@@ -1,7 +1,5 @@
 import pytest
 from jose import jwt
-from librt.strings import tolower
-
 from app.security import (
     verify_password,
     get_password_hash,
@@ -56,6 +54,21 @@ class TestPasswordHashing:
     def test_various_password_hashing(self, password):
         hashed = get_password_hash(password)
         assert verify_password(password, hashed) is True
+
+
+    def test_hashed_password_is_not_equal_to_plain_text(self, sample_password):
+        hash1 = get_password_hash(sample_password)
+        assert hash1 != sample_password
+
+
+    def test_verify_password_returns_true_for_correct_password(self, sample_password):
+        hash_example = get_password_hash(sample_password)
+        assert verify_password(sample_password,hash_example) is True
+
+
+    def test_verify_password_returns_false_for_wrong_password(self, hashed_password):
+        assert verify_password("wrong_password", hashed_password) is False
+
 
 # ===== Тесты JWT токенов =====
 class TestJWTTokens:

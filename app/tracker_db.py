@@ -115,7 +115,7 @@ async def create_user(db, username: str, hashed_password: str, role: str = "user
     try:
         row = await db.fetchrow(
             "INSERT INTO users (username, hashed_password, role) VALUES ($1, $2, $3) RETURNING id, username, role",
-            username, hashed_password,role
+            username, hashed_password, role
         )
         return {"id": row["id"], "username": row["username"], "role": row["role"]}
     except asyncpg.exceptions.UniqueViolationError:

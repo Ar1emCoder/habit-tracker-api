@@ -47,3 +47,11 @@ def decode_access_token(token: str) -> dict:
             detail="Неверный или просроченный токен",
             headers={"WWW-Authenticate": "Bearer"}
         )
+
+
+def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=7))
+    to_encode.update({"exp": expire})
+    encode_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encode_jwt

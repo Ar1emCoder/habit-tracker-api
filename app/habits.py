@@ -32,7 +32,18 @@ class UserCreate(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    token_type: str
+
 
 @router.post("/habits")
 async def create_habit(habit: HabitCreate, db=Depends(get_db)):
@@ -111,10 +122,13 @@ async def login(user: UserCreate, db=Depends(get_db)):
     if not db_user or not security.verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(status_code=400, detail="Неверное имя пользователя или пароль")
     access_token = security.create_access_token(data={"sub": db_user["username"], "role": db_user["role"]})
+    refresh_token = security.create_refresh_token(data={"sub": db_user["username"]})
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer"
     }
+
 
 
 async def require_admin(current_user: dict=Depends(get_current_user)):
@@ -132,3 +146,26 @@ async def get_all_users(admin: dict = Depends(require_admin)):
         "your_role": admin["role"],
         "data": "Здесь мог бы быть список всех пользователей системы"
     }
+
+
+@router.post("/refresh", response_model=RefreshResponse)
+async def refresh_access_token(request: RefreshRequest, db = Depends(get_db)):
+    try:
+        payload = security.decode_access_token(request.refresh_token)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="Невалидный или истёкший refresh-токен")
+
+    username = payload.get("sub")
+    if username is None:
+        raise HTTPException(status_code=401, detail="Некорректный токен")
+
+    user = await get_user_by_username(db, username)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Пользователь не найден")
+
+    new_access_token = security.create_access_token(data={"sub": user["username"], "role": user["role"]})
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer"
+    }
+

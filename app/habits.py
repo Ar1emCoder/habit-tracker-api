@@ -110,10 +110,25 @@ async def login(user: UserCreate, db=Depends(get_db)):
     db_user = await get_user_by_username(db, user.username)
     if not db_user or not security.verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(status_code=400, detail="Неверное имя пользователя или пароль")
-    access_token = security.create_access_token(data={"sub": db_user["username"]})
+    access_token = security.create_access_token(data={"sub": db_user["username"], "role": db_user["role"]})
     return {
         "access_token": access_token,
         "token_type": "bearer"
     }
 
 
+async def require_admin(current_user: dict=Depends(get_current_user)):
+    """Зависимость для проверки прав администратора"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Недостаточно прав. Требуется роль admin.")
+    return current_user
+
+
+@router.get("/admin/users")
+async def get_all_users(admin: dict = Depends(require_admin)):
+    """ Доступен только для админов """
+    return {
+        "message": f"Добро пожаловать, админ {admin['username']}",
+        "your_role": admin["role"],
+        "data": "Здесь мог бы быть список всех пользователей системы"
+    }

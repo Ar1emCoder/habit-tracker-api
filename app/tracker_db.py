@@ -110,14 +110,14 @@ async def get_habit_stats(db):
     return {"total_habits": total_habits, "completed_today": completed_today}
 
 
-async def create_user(db, username: str, hashed_password: str):
+async def create_user(db, username: str, hashed_password: str, role: str = "user"):
     # Создаем нового пользователя в БД
     try:
         row = await db.fetchrow(
-            "INSERT INTO users (username, hashed_password) VALUES ($1, $2) RETURNING id, username",
-            username, hashed_password
+            "INSERT INTO users (username, hashed_password, role) VALUES ($1, $2, $3) RETURNING id, username, role",
+            username, hashed_password,role
         )
-        return {"id": row["id"], "username": row["username"]}
+        return {"id": row["id"], "username": row["username"], "role": row["role"]}
     except asyncpg.exceptions.UniqueViolationError:
         return None # если такой уже есть пользователь
 
@@ -125,7 +125,7 @@ async def create_user(db, username: str, hashed_password: str):
 async def get_user_by_username(db, username: str):
     # Поиск пользователя по имени для проверки пароля
     row = await db.fetchrow(
-        "SELECT id, username, hashed_password FROM users WHERE username = $1",
+        "SELECT id, username, hashed_password, role FROM users WHERE username = $1",
         username
     )
     if row:

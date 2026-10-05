@@ -77,7 +77,7 @@ def test_refresh_token_flow(client):
 
     new_access_token = new_data["access_token"]
 
-    # 5. ПРАВИЛЬНАЯ ПРОВЕРКА: вместо сравнения строк, мы декодируем новый токен,
+    # 5. правильная проверка: вместо сравнения строк, мы декодируем новый токен,
     payload = security.decode_access_token(new_access_token)
     assert payload.get("sub") == unique_username
     assert payload.get("role") == "user"
